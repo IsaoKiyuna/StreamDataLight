@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-GC4N4ZLYN3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-GC4N4ZLYN3');
+    </script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stream Data Light</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .ranking-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            background: white;
+            margin-bottom: 2rem;
+        }
+        .title-icon {
+            color: #9146FF;
+        }
+    </style>
+</head>
+
+<body class="container py-4">
+    <nav class="navbar navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('home') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="ロゴ" height="40" class="me-2">
+                <strong>Stream Data Light</strong>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 🔍 検索フォーム -->
+    <div class="ranking-card mx-auto mb-5 text-center" style="max-width: 900px;">
+        <h2 class="mb-3 fw-bold">
+            <i class="bi bi-search"></i> ストリーマーを検索
+        </h2>
+        <form method="POST" class="d-flex justify-content-center">
+            <div class="input-group w-100" style="max-width: 500px;">
+                <input type="text" name="search" placeholder="Twitch ID（例: fps_shaka）" class="form-control" required>
+                <button type="submit" class="btn btn-primary">検索</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 👑 フォロワー数トップ10 -->
+    <div class="ranking-card mx-auto my-5" style="max-width: 900px;">
+        <h2 class="text-center mb-4">
+            <i class="bi bi-award title-icon"></i> Twitchフォロワー数トップ10
+        </h2>
+
+        <!-- PC表示: テーブル形式 -->
+        <div class="table-responsive d-none d-md-block">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>順位</th>
+                        <th>アイコン</th>
+                        <th>配信者名</th>
+                        <th>Twitch ID</th>
+                        <th>フォロワー数</th>
+                        <th>詳細</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in top_streamers %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                            <img src="{{ s.profile_image_url }}" alt="アイコン" width="48" height="48" class="rounded-circle" onerror="this.src='/static/default_icon.png'">
+                        </td>
+                        <td>{{ s.display_name }}</td>
+                        <td>{{ s.twitch_id }}</td>
+                        <td>{{ "{:,}".format(s.followers) }}</td>
+                        <td>
+                            <a href="{{ url_for('streamer_detail', twitch_id=s.twitch_id) }}" class="btn btn-sm btn-primary fw-bold shadow-sm px-3">
+                                <i class="bi bi-arrow-right-circle me-1"></i> 詳細
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- モバイル表示: カード形式 -->
+        <div class="d-md-none">
+            {% for s in top_streamers %}
+            <div class="card mb-3 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <img src="{{ s.profile_image_url }}" alt="アイコン" width="48" height="48" class="rounded-circle me-3" onerror="this.src='/static/default_icon.png'">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1 fw-bold">{{ loop.index }}位：{{ s.display_name }}</h6>
+                        <p class="mb-1 small text-muted">{{ s.twitch_id }} / {{ "{:,}".format(s.followers) }} フォロワー</p>
+                        <a href="{{ url_for('streamer_detail', twitch_id=s.twitch_id) }}" class="btn btn-sm btn-primary fw-bold shadow-sm px-3 mt-2">
+                            <i class="bi bi-arrow-right-circle me-1"></i> 詳細
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 🎮 カテゴリランキング -->
+    <div class="ranking-card mx-auto my-5" style="max-width: 900px;">
+        <h2 class="text-center mb-3">
+            <i class="bi bi-controller title-icon"></i> 人気のカテゴリ (直近30日間)
+        </h2>
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>順位</th>
+                        <th>ゲーム名</th>
+                        <th>最大視聴者数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in top_games_by_peak %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ game.game_name }}</td>
+                        <td>{{ "{:,}".format(game.max_peak) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 🌐 フッター -->
+    <footer class="bg-light text-center text-lg-start mt-5 border-top pt-4">
+        <div class="container px-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h5>Stream Data Light</h5>
+                    <p class="text-muted small">Twitch配信者の統計情報を簡単に確認できる軽量ツールです。</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5 class="text-uppercase">リンク</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/about" class="text-decoration-none text-muted">サイトについて</a></li>
+                        <li><a href="/privacy" class="text-decoration-none text-muted">プライバシーポリシー</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h5 class="text-uppercase">SNS</h5>
+                    <a href="https://x.com/StreamDataLight" class="me-2 text-muted" target="_blank" rel="noopener">
+                        <i class="bi bi-twitter-x"></i> X（旧Twitter）
+                    </a><br>
+                    <a href="https://github.com/your_account" class="me-2 text-muted" target="_blank" rel="noopener">
+                        <i class="bi bi-github"></i> GitHub
+                    </a>
+                </div>
+            </div>
+            <div class="text-center text-muted mt-4 mb-2 small">
+                © 2025 Stream Data Light. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

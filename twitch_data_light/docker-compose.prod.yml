@@ -1,0 +1,80 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: stream_data_light
+    command: gunicorn -b 0.0.0.0:5000 -w 2 --timeout 120 app:app
+    expose:
+      - "5000"
+    env_file:
+      - .env
+    volumes:
+      - ./twitch_data.db:/app/twitch_data.db
+    restart: always
+
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.monitor
+    container_name: stream_monitor
+    env_file:
+      - .env
+    volumes:
+      - ./twitch_data.db:/app/twitch_data.db
+    depends_on:
+      - web
+    restart: always
+
+  updater:
+    build:
+      context: .
+      dockerfile: Dockerfile.updater
+    container_name: update_db
+    env_file:
+      - .env
+    volumes:
+      - ./twitch_data.db:/app/twitch_data.db
+    depends_on:
+      - web
+    restart: always
+
+  cleaner:
+    build:
+      context: .
+      dockerfile: Dockerfile.cleaner
+    container_name: clean_stream_stats
+    env_file:
+      - .env
+    volumes:
+      - ./twitch_data.db:/app/twitch_data.db
+    depends_on:
+      - web
+    restart: always
+
+  summary:
+    build:
+      context: .
+      dockerfile: Dockerfile.summary
+    container_name: update_stream_summary
+    env_file:
+      - .env
+    volumes:
+      - ./twitch_data.db:/app/twitch_data.db
+    depends_on:
+      - web
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: stream_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - web
+    restart: always
